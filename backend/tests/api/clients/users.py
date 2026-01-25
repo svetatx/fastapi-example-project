@@ -1,8 +1,6 @@
+from tests.api.utils import APIClient
+from http import HTTPStatus
 
-from utils import APIClient
-from http import HTTPMethod, HTTPStatus
-
-BASE_URL = "http://127.0.0.1:8000/api/v1"
 
 
 class UsersClient:

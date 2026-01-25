@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from utils import APIClient
+from tests.api.utils import APIClient
 
 
 class ItemsClient:

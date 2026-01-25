@@ -5,6 +5,7 @@ from faker import Faker
 
 fake = Faker()
 
+
 def test_user_can_register(page: Page):
     login.open_login(page)
     signup.go_to_signup(page)
@@ -14,9 +15,11 @@ def test_user_can_register(page: Page):
     signup.register(page, fullname=fullname, email=email, password=password)
     signup.assert_registered(page)
 
+
 def test_login_with_test_user(page: Page, signup_user):
     login.login(page, signup_user["email"], signup_user["password"])
     # login.assert_logged_in(page)
+
 
 def test_add_item(page: Page, signup_user):
     login.login(page, signup_user["email"], signup_user["password"])
@@ -24,6 +27,7 @@ def test_add_item(page: Page, signup_user):
     items.open_add_modal(page)
     items.fill_item_form(page, title="title item", description=" ")
     items.save_item(page)
+
 
 # ❗️ тест для кнопки Delete — без авто-очистки
 @pytest.mark.no_user_cleanup

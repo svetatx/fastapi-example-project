@@ -1,98 +1,48 @@
-import json
-import logging
-import requests
-from requests import Response
-from json import JSONDecodeError
-import allure
-from allure_commons.types import AttachmentType
+# https://github.com/ValeriyMenshikov/restcodegen
+# https://github.com/victoretc/redrover_python/tree/main/lesson0
 
+# Что нужно API тестам 
 
-class APIClient:
-    def __init__(self, base_url="http://127.0.0.1:8000/api/v1", default_headers=None):
-        self.base_url = base_url
-        self.default_headers = default_headers or {}
+# Требования к API "фреймворку":
 
-    def response_logging(response: Response):
-        logging.info("Request: " + response.request.url)
-        if response.request.body:
-            logging.info("INFO Request body: " + str(response.request.body))
-        logging.info("Request headers: " + str(response.request.headers))
-        logging.info("Response code: " + str(response.status_code))
-        logging.info("Response: " + str(response.text))
+# 1. Отправка запросов (requests, httpx)
+# 2. Логгирование в терминал и Allure отчет
+# 3. Поддержка аутентификации
+# 4. Полная валидация данных ответа [Статус код, Тело ответа и так далее]
+# 5. Человекочитаемый код "Фреймворка" для тестирования.
+# 6. Подготовка тестовых данных
+# 7. В lesson0 реализована отправка запросов, в некоторой степени подготовка тестовых данных (API очень простой и нет возможности столкнуться с реальными проблемами), частичная валидация ответа.
 
+# Инструменты для написания API тестов на Python
+# HTTP-клиенты:
 
-def _get_request_body(response: Response):
-    try:
-        if response.request.body:
-            return json.dumps(
-                json.loads(response.request.body), indent=4, ensure_ascii=True
-            )
-    except (JSONDecodeError, TypeError):
-        return str(response.request.body)
-    return ""
+# requests или httpx: основные библиотеки для отправки HTTP-запросов. Также можно использовать другие клиенты, которые позволяют удобно работать с HTTP. Так как requests напрямую непредназначен для тестирования обычно пишутся небольшие кастомные обертки
+# Логирование и отладка:
 
+# logging и loguru: для логгирования отправляемых, получаемых данных и ошибок.
+# allure (сервер и плагин allure-pytest): для создания отчетов о тестах.
+# curlify: преобразует запросы в формат cURL для быстрого воспроизведения и отладки.
+# Сравнение данных:
 
-def _get_response_body(response: Response):
-    try:
-        return json.dumps(response.json(), indent=4, ensure_ascii=True)
-    except JSONDecodeError:
-        return response.text
+# Deepdiff: для более удобного сравнения JSON-структур.
+# Дополнительные клиенты:
 
+# Поддержка интеграции с redis, kafka, sqlalchemy для работы с различными системами данных.
+# Валидация и генерация данных:
 
-def response_attaching(response: Response):
-    allure.attach(
-        body=response.request.url,
-        name="Request url",
-        attachment_type=AttachmentType.TEXT,
-    )
+# Pydantic: для генерации и валидации JSON из Python-моделей.
+# jsonschema: для работы с JSON-схемами.
+# Переменные окружения:
 
-    if response.request.body:
-        allure.attach(
-            body=_get_request_body(response),
-            name="Request body",
-            attachment_type=AttachmentType.JSON,
-            extension="json",
-        )
+# python-dotenv и os, или pydantic-settings: для работы с переменными окружения.
+# Без этого никак:
 
-    if response.content:
-        allure.attach(
-            body=_get_response_body(response),
-            name="Response",
-            attachment_type=AttachmentType.JSON,
-            extension="json",
-        )
+# pytest и различные плагины для написания и выполнения тестов. Могут писаться кастомные assertions или использоваться готовые библиотеки для сравнения.
+# Дополнительные инструменты (не связанные напрямую с Python)
+# Системы CI/CD:
 
+# GitLab CI, GitHub Actions, Azure Pipeline и другие для автоматизации процессов CI/CD.
+# Контейнеризация:
 
-def api_request(
-    endpoint,
-    method,
-    base_api_url="http://127.0.0.1:8000/api/v1",
-    data=None,
-    params=None,
-    json=None,
-    headers=None,
-    expected_status=None,
-) -> dict:
-    # Устанавливаем expected_status по умолчанию в зависимости от метода
-    if expected_status is None:
-        if method.lower() == "get":
-            expected_status = 200
-        elif method.lower() == "post":
-            expected_status = 201
-
-    url = f"{base_api_url}{endpoint}"
-    response = requests.request(
-        method, url, data=data, params=params, json=json, headers=headers
-    )
-
-    APIClient.response_logging(response)
-    response_attaching(response)
-
-    # Проверяем expected
-    assert response.status_code == expected_status, (
-        f"Expected status {expected_status}, but got {response.status_code}. "
-        f"Response: {response.text}"
-    )
-
-    # Возвращаем JSON
-    return response.json()
+# Docker: для создания и управления контейнерами, обеспечивая изолированную среду для выполнения тестов.
+# Так же проект может дополняться дополнительными бибилотеками необходимыми для проекта
