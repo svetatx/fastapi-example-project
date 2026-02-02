@@ -1,22 +1,23 @@
 import random
 import string
 import pytest
-from http import HTTPStatus
-from tests.api.utils import APIClient
+
+from tests.api.core.client import Client, Configuration
 from tests.api.clients.users import UsersClient
 from tests.api.clients.items import ItemsClient
 
 
-@pytest.fixture
-def api_client() -> APIClient:
-    return APIClient(base_url="http://127.0.0.1:8000/api/v1")
+base_url = "http://127.0.0.1:8000/api/v1"
 
 
 @pytest.fixture
-def authenticated_api_client(auth_headers) -> APIClient:
-    return APIClient(
-        base_url="http://127.0.0.1:8000/api/v1", default_headers=auth_headers
-    )
+def api_client() -> Client:
+    return Client(Configuration(base_url=base_url))
+
+
+@pytest.fixture
+def authenticated_api_client(auth_headers) -> Client:
+    return Client(Configuration(base_url=base_url, headers=auth_headers))
 
 
 @pytest.fixture
@@ -38,7 +39,7 @@ def _rand_email(prefix="sveta"):
     return f"{prefix}{''.join(random.choices(string.digits, k=5))}@example.com"
 
 
-@pytest.fixture()
+@pytest.fixture
 def user_payload():
     return {
         "email": _rand_email(),
@@ -47,17 +48,21 @@ def user_payload():
     }
 
 
+@pytest.fixture
+def created_user(users_api_client: UsersClient, user_payload):
+    yield users_api_client.register_user(**user_payload).json()
+
+
 @pytest.fixture()
-def auth_headers(created_user, api_client: APIClient, user_payload):
-    got = api_client.post(
-        endpoint="/login/access-token",
+def auth_headers(created_user, api_client: Client, user_payload):
+    response = api_client.post(
+        url="/login/access-token",
         data={
             "username": user_payload["email"],
             "password": user_payload["password"],
         },
-        expected_status=HTTPStatus.OK,
     )
-    return {"Authorization": f"Bearer {got['access_token']}"}
+    return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
 
 @pytest.fixture()
